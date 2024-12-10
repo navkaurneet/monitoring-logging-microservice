@@ -1,0 +1,30 @@
+---
+- name: Deploy Observable Microfrontend to Kubernetes
+  hosts: all
+  tasks:
+    - name: Build Docker images
+      command: docker build -t {{ item.tag }} {{ item.context }}
+      with_items:
+        - { tag: "frontend:latest", context: "./frontend" }
+        - { tag: "service1:latest", context: "./service1" }
+        - { tag: "service2:latest", context: "./service2" }
+        - { tag: "shared-backend:latest", context: "./shared-backend" }
+
+    - name: Push Docker images
+      command: docker push <your-registry>/{{ item }}
+      with_items:
+        - "frontend:latest"
+        - "service1:latest"
+        - "service2:latest"
+        - "shared-backend:latest"
+
+    - name: Apply Kubernetes manifests
+      command: kubectl apply -f {{ item }}
+      with_items:
+        - "./k8s-manifests/configmaps.yaml"
+        - "./k8s-manifests/postgres-deployment.yaml"
+        - "./k8s-manifests/otel-collector-deployment.yaml"
+        - "./k8s-manifests/frontend-deployment.yaml"
+        - "./k8s-manifests/service1-deployment.yaml"
+        - "./k8s-manifests/service2-deployment.yaml"
+        - "./k8s-manifests/services.yaml"
